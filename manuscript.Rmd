@@ -1,0 +1,720 @@
+---
+title: "Detecting Religion from Space: Nyepi Day in Bali"
+author: |
+  I Wayan Gede Astawa Karang^1^
+  Alemarie Ceria^2^
+  John Lynham^2^*
+date: ^1^Department of Marine Sciences, Faculty of Marine Science and Fisheries, Udayana University, Indonesia ^2^Department of Economics,
+  University of Hawaii at Manoa, 2424 Maile Way, Honolulu, HI 96822, USA *Corresponding Author - lynham@hawaii.edu 
+header-includes:
+    - \usepackage{setspace}
+    - \usepackage{lineno}
+    - \usepackage{bm}
+    - \usepackage{graphicx}
+    - \usepackage{amsmath}
+    - \usepackage[export]{adjustbox}
+    - \linenumbers
+output:
+  bookdown::pdf_document2:
+    keep_tex: true
+    toc: false
+fontsize: 12pt
+bibliography: clean_references.bib
+csl: remote-sensing-of-environment.csl
+abstract: Daily changes in human activity are difficult to detect using nightlight imagery because many factors that influence nightlights are changing from night to night. We propose using a difference-in-differences methodology for detecting daily changes in human behavior using NASA’s Black Marble product suite. We find that total top-of-atmosphere radiance on the Indonesian island of Bali decreases by close to 100\% during the Hindu holiday of Nyepi, relative to counterfactual islands. We then use changes in total radiance during Nyepi to predict census information on religion in this region of Indonesia; nighttime imagery can explain 78\% of the variation in religion at the equivalent of the county level, and 62\% of the variation at the equivalent of the zipcode level. We use the same method to correctly identify pockets of large Hindu populations on the predominantly Muslim islands of Java and Lombok.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library("sf")
+library("rnaturalearth")
+library("rnaturalearthdata")
+library(readxl)
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(readr)
+```
+
+
+**Keywords:** Nighttime lights; Black Marble; Human activity; Religion
+
+**Highlights:**
+
+- The Nyepi "Day of Silence" on Bali can be observed from space
+- An island of 4 million people goes dark for one night
+- Satellite imagery accurately predicts the proportion of Hindus in different regions of Bali
+- Populations of Hindus on other islands can also be identified with satellite imagery
+
+\newpage
+
+\doublespacing
+
+# Introduction
+
+For one night a year, an island with a population of 4 million people goes completely dark. *Nyepi* (or "Silent Day") normally occurs in March or April and  is primarily celebrated on the island of Bali in Indonesia, although it is a public holiday across the country. It marks the beginning of a new year according to the Balinese *Saka* calender.\footnote{The same day is celebrated in India as \textit{Ugadi} but the traditions and customs are different.} The traditional belief among Hindus in Bali is that, during Nyepi, new life is started from the nothingness (*Sunya*) so all signs of life are put to rest to create a feeling of restored purity. Nyepi aims to balance humans (the microcosm) and the universe (the macrocosm) and to foster spirituality within both humans and nature. Anything that might interfere with that purpose is therefore restricted on the island.
+
+There are four main restrictions during Nyepi and these are observed from 6am until 6am the next morning. The first restriction, *Amati Geni*, is that the use of fire, light, or electricity is forbidden. Nearly the entire island goes dark for the night, including tourist hotels and the airport. The other restrictions are *Amati Karya*, no working, *Amati Lelanguan*, no entertainment (including internet access), and *Amati Lelungan*, no traveling. These restrictions are enforced through Bali customary law and by *Pecalang*, local watchmen who patrol the streets to ensure that the rules are being followed. There are, of course, exceptions granted to hospitals and other emergency services. The silence that descends on Bali during Nyepi can be detected underwater [@williams2018effect] and it has been estimated that local greenhouse gas emissions decline by 33%  [@aldrian2014layanan;@aprilina2016hubungan]. 
+
+There is growing interest in using nightlight imagery to study human behavior from space.^[This is part of a broader literature on using satellite imagery in general to study human behavior. See @jean2016combining and @burke2021using for recent applications to economic development.] A recent special issue on nightlights by @levin2020remote provides an excellent overview and outlines some applications including mapping urban areas, estimating GDP, and monitoring disasters. @roman2015holidays use nightlight imagery to observe aggregate human behavior during the Christmas/New Year’s season and the Holy Month of Ramadan. @molthan2013satellite use nightlight imagery to identify power outages following Superstorm Sandy and @azad2021spatio use a similar approach to study Hurricane Maria's impact on Puerto Rico. The primary source for all of this work is high quality images of nightlights from the Suomi-National Polar-orbiting Partnership (Suomi-NPP) and Joint Polar Satellite System (JPSS) satellite platforms.
+
+In this paper, we propose using an econometric method (difference-in-differences) to detect night-to-night changes in total radiance on the island of Bali. The basic idea is to compare regions affected by Nyepi to unaffected regions, after controlling for pre-existing differences in total radiance across regions and the fact that image conditions will be different on different nights. We find that total radiance decreases by close to 100% during Nyepi on the island of Bali. We then estimate the reduction in radiance during Nyepi at the equivalent of the county and zipcode level in Indonesia. We use these estimates to predict the percentage of Hindus living in these counties and zipcodes in Indonesia, since Nyepi is only celebrated by Hindus in this predominantly Muslim country. Using only satellite imagery as an input, we can explain 78% of the variation in percent Hindu at the county level and 62% of the variation at the zipcode level. We use the same approach to correctly identify pockets of Hindu populations living on the islands of Java and Lombok.
+
+# Materials and methods
+
+## Study area
+
+```{r include=FALSE}
+library("ggplot2")
+theme_set(theme_bw())
+
+
+#library(s2)
+#world <- st_as_sf(s2_data_tbl_countries)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+library("ggspatial")
+#world_points<- st_centroid(world, check=FALSE)
+
+
+
+#world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+bali<-data.frame(longitude=115.091831,latitude=-8.341536)
+```
+
+```{r include=FALSE}
+(indonesia <- ggplot(data = world) +
+  geom_sf() +
+  geom_rect(xmin = 110.0589, xmax = 120.0522, ymin = -9.2364, ymax = -6.2230, 
+     fill = NA, colour = "black", size = 0.5) +
+  scale_fill_viridis_d(option = "plasma") +
+   coord_sf(xlim = c(95.0405, 141.0338), ylim = c(-11.1660, 5.7417), expand = FALSE, datum = NA) + 
+  theme_void() +
+   theme(panel.background = element_rect(fill = "azure"), panel.border = element_rect(fill = NA))
+   #theme(panel.background = element_rect(fill = "azure"),     panel.border = element_rect(fill = NA))
+)
+```
+
+```{r include=FALSE}
+balimap <- ggplot(data = world) + 
+geom_sf(fill= "antiquewhite") + 
+  geom_rect(xmin = 113.6855, xmax = 116.7760, ymin = -8.9929, ymax = -7.5633, 
+     fill = NA, colour = "dark green", size = 0.5) +
+  geom_rect(xmin = 112.65, xmax = 113.5, ymin = -8.5, ymax = -7.5, 
+            fill = NA, colour = "#d95f0e", size = 0.5) +
+  geom_rect(xmin = 115.771564, xmax = 116.762388, ymin = -8.938315, ymax = -8.181919, 
+            fill = NA, colour = "#d95f0e", size = 0.5) +
+annotate("text", x=115.091831, y=-8.341536, label="Bali", size=4,color = "darkblue", fontface = "bold") + 
+annotate("text", x=116.330216, y=-8.641484, label="Lombok", size=4,color = "darkblue", fontface = "bold") + 
+  annotate("text", x=118, y=-8.7, label="Sumbawa", size=4,color = "darkblue", fontface = "bold") +
+annotate("text", x=111.5, y=-7.5, label="Java", size=4,color = "darkblue", fontface = "bold") +
+annotation_scale(location = "bl", width_hint = 0.5) + 
+annotation_north_arrow(location = "bl", which_north = "true", pad_x = unit(0.3, "in"), pad_y = unit(0.2, "in"), style = north_arrow_fancy_orienteering) + 
+    coord_sf(xlim = c(110.0589, 120.0522), ylim = c(-9.2364, -6.2230), expand = FALSE) +
+#coord_sf(xlim = c(113.6855, 116.7760), ylim = c(-8.9929, -7.5633), expand = FALSE) + 
+xlab("Longitude") + ylab("Latitude") + 
+#ggtitle("Map of Indonesia and the Study Site") + 
+theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5), panel.background = element_rect(fill = "aliceblue"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=7, fig.asp=1, fig.cap="\\label{fig:map}Map showing the islands of Java, Bali, Lombok and Sumbawa in Indonesia. This map corresponds to the spatial extent of our main analysis. The inset map shows the full extent of Indonesia with the black rectangle indicating the extent of the main map. The green rectangle shows the spatial extent of the images in Figure \\ref{fig:photos} and the brown rectangles correspond to the areas shown in Figures \\ref{fig:side_by_side} and \\ref{fig:LOMBOKside_by_side}."}
+# https://www.r-spatial.org/r/2018/10/25/ggplot2-sf-3.html
+library(cowplot)
+#(ratioIndonesia <- (2500000 - 200000) / (1600000 - (-2400000))) = 0.575
+ggdraw(balimap) +
+    draw_plot(indonesia, width = 0.3, height = 0.3 * 10/6 * 0.575, 
+        x = 0.65, y = 0.5)
+```
+
+The study area is the island of Bali in Indonesia (Figure \ref{fig:map}). For the purposes of our analysis, we restrict our attention to the Indonesian islands near Bali: namely Lombok, Sumbawa, and the eastern part of Java island. Specifically we crop all data layers to a box bounded by (-9.2364, 110.0589) and (-6.2230, 120.0522). This is the spatial extent of the main map shown in Figure \ref{fig:map}. 
+
+## Black Marble data
+
+\begin{figure}
+
+\begin{tabular}{cccc}
+
+	&	One Day Before & Nyepi & One Day After \\
+	\parbox[t]{1mm}{{\rotatebox[origin=c]{90}{2017}}} & \includegraphics[width=.3\linewidth,valign=m]{2017-03-27.png} & \includegraphics[width=.3\linewidth,valign=m]{2017-03-28.png} & \includegraphics[width=.3\linewidth,valign=m]{2017-03-29.png}\\
+	\\
+\parbox[t]{1mm}{{\rotatebox[origin=c]{90}{2018}}} & \includegraphics[width=.3\linewidth,valign=m]{2018-03-16.png} & \includegraphics[width=.3\linewidth,valign=m]{2018-03-17.png} & \includegraphics[width=.3\linewidth,valign=m]{2018-03-18.png}\\
+	\\
+	\parbox[t]{1mm}{{\rotatebox[origin=c]{90}{2019}}} & \includegraphics[width=.3\linewidth,valign=m]{2019-03-06.png} & \includegraphics[width=.3\linewidth,valign=m]{2019-03-07.png} & \includegraphics[width=.3\linewidth,valign=m]{2019-03-08.png}\\
+\\
+\parbox[t]{1mm}{{\rotatebox[origin=c]{90}{2020}}} & \includegraphics[width=.3\linewidth,valign=m]{2020-03-24.png} & \includegraphics[width=.3\linewidth,valign=m]{2020-03-25.png} & \includegraphics[width=.3\linewidth,valign=m]{2020-03-26.png}\\
+\\
+\parbox[t]{1mm}{{\rotatebox[origin=c]{90}{2021}}} & \includegraphics[width=.3\linewidth,valign=m]{2021-03-13.png} & \includegraphics[width=.3\linewidth,valign=m]{2021-03-14.png} & \includegraphics[width=.3\linewidth,valign=m]{2021-03-15.png}\\
+\end{tabular}
+
+\caption{Composite nightlight images of Bali one day before, during Nyepi, and one day after for 2017-2021. The spatial extent of each image corresponds to the green rectangle in Figure \ref{fig:map}. These snapshots are for motivational purposes only and do not display the raw data used in our analysis. Source: NASA Worldview.}
+
+\label{fig:photos}
+
+\end{figure}
+
+We used the Black Marble VNP46A1 Daily At-sensor Top Of Atmosphere Nighttime Radiance product provided by NASA through the Level-1 and Atmosphere Archive and Distribution System (LAADS) website. We downloaded the VNP46A1 product for Tile H:29,V:9 for the four days before Nyepi, Nyepi Day itself, and four days after for each year from 2017 to 2021. The specific data set we used was DNB_At_Sensor_Radiance_500m which measures at-sensor Day/Night Band (DNB) radiance in units of $nW \cdot cm^{-2} \cdot sr^{-1}$ at a 500m resolution. The original source of the imagery is the Visible Infrared Imaging Radiometer Suite (VIIRS), on board
+the Suomi-National Polar-orbiting Partnership (Suomi-NPP) and Joint Polar Satellite System (JPSS) satellite platforms [@lee2006npoess;@hillger2014suomi;@roman2018nasa]. We converted the dataset for each night to a geoTIFF file and cropped the image to the bounding box coordinates explained in the previous subsection. We also experimented with using the Black Marble VNP46A2 Daily Moonlight-adjusted Nighttime Lights product but found that it was not appropriate for this particular application.
+
+It is important to note that Nyepi always falls on a new moon so, although the VNP46A1 data is not lunar-corrected, the influence of lunar irradiance is likely to be minimal for the four nights before, the night of, and the four nights after. Nevertheless, we control for potential lunar effects in our regression model (explained below). Further, since Nyepi is a lunar holiday, its date on the Gregorian calendar varies from year to year. This is helpful for our purposes since the day of the week, and even the month, that Nyepi falls on changes from year to year. For example, if Friday nights are always brighter on Bali relative to other islands and Nyepi always fell on a Friday then this would bias our analysis. Table \ref{tab:dates} summarizes the dates Nyepi has occurred on in our sample, along with information on lunar illumination conditions. Figure \ref{fig:photos} displays snapshots of Bali and neighboring islands obtained from the NASA Worldview site for one night before, the night of, and one night after Nyepi. The spatial extent of these images is indicated by the green rectangle in Figure \ref{fig:map}. These images were not used in our analysis and are purely for motivational purposes. The stark effect of Nyepi on nighttime lights on Bali (the middle island) can be clearly seen. It can also be seen how much variation there is from day to day and especially from year to year.
+
+\begin{table}[]
+\centering
+\caption{Sample Dates and Lunar Conditions by Year}\label{tab:dates}
+\begin{tabular}{cccc}
+\hline
+Start Date & Nyepi & End Date & Moon-Illuminated Fraction Range \\ 
+\hline \hline
+March 24, 2017 & Tuesday, March 28, 2017 & April 1, 2017 & 13.16\% - 27.45\% \\
+March 13, 2018 & Saturday, March 17, 2018 & March 21, 2018 & 13.05\% - 19.19\% \\
+March 3, 2019 & Thursday, March 7, 2019 & March 11, 2019 & 7.13\% - 22.38\% \\
+March 21, 2020 & Wednesday, March 25, 2020 & March 29, 2020, & 6.07\% - 23.32\% \\
+March 10, 2021 & Sunday, March 14, 2021 & March 18, 2021, & 7.01\% - 23.8\% \\
+\hline
+\end{tabular}
+\end{table}
+
+## Census Data
+
+The government of Indonesia officially recognizes six religions and all citizens are required to report their religion on government documents. As a result, census data on religion in Indonesia is extensive and extremely detailed. We obtained information on the percentage of people identifying as Hindu  from the 2010 Indonesian Census.^[https://sp2010.bps.go.id] This data is available at the province level (*Provinsi*), regency/city level (*Kabupaten/Kota*), and district level (*Kecamatan*). As of 2021, there are 34 provinces in Indonesia (roughly equivalent to states in the US), 514 regencies/cities (roughly equivalent to counties in the US), and 7,024 districts (roughly equivalent to zipcodes in the US). We downloaded religion data at both the regency/city and the district level for all areas shown in the main map in Figure \ref{fig:map}.
+
+## Methods
+
+### Estimation Methods
+
+We overlaid the geoTIFFS produced using the At-sensor Top Of Atmosphere Nighttime Radiance layer of VNP46A1 with shapefiles indicating provinces, regencies, and districts in Indonesia. We then summed the values of the pixels contained within each shapefile region to estimate total radiance. Next, we used an ordinary least squares regression model to estimate the percentage reduction in radiance on Bali relative to other provinces. The regression specification we used is known as difference-in-differences [@snow1854cholera;@angrist1999empirical;@lechner2011estimation]:
+\begin{equation} \label{eq:main_reg}
+\log(Radiance)_{i,t} = \beta_0 + \beta_1Nyepi_t + \beta_2Bali_i + \beta_3(Nyepi_t*Bali_i) + \boldsymbol{\delta_i} + \boldsymbol{d_t} + u_{i,t}, 
+\end{equation}
+where $Radiance$ is the sum of all pixel values in area $i$ on day $t$, $Nyepi$ is a date dependent indicator variable for Nyepi day, $Bali$ is an indicator for the province of Bali and $\boldsymbol{\delta_i}$ is a vector of indicator variables for all other provinces (omitting Yogyakarta, which is captured by the intercept term $\beta_0$). $\boldsymbol{d_t}$ is a vector of indicator variables for all dates in the sample; this controls for factors influencing radiance from night to night (see @li2019anisotropic and @wang2021quantifying, for example). These vectors of additional controls are typically referred to in the econometrics literature as fixed effects. It is important to point out that the date fixed effects control for any changes in image conditions across night (e.g. lunar contamination or view angle). The province fixed effects control for any stable geographical patterns (e.g. differences in population, income, and cloud contamination). Night-to-night variation in cloud conditions (that is not captured by the province and date fixed effects) is captured by $u_{i,t}$, which is assumed to be Gaussian noise. The coefficient $\beta_3$ reports the estimated percentage change in radiance on Bali due to Nyepi. Results are shown in Table \ref{tab:bali}. We used the same approach to estimate the percentage change in lights by regency/city and district, replacing the Bali variable with an indicator variable for a particular regency/city or district. Results are shown in Table \ref{tab:county} for regencies/cities in Bali and in Tables A1-A6 in the Appendix for districts in Bali.
+
+### Prediction Method
+
+We used the estimated reduction in radiance (at both the regency/city and district level) to predict the percentage of Hindus living in any given region. The specific regression model we estimate is:
+\begin{multline}\label{eq:predict} 
+	PercentHindu_{i} = \beta_0 + \beta_1PercentReductionRadiance_i + \beta_2(PercentReductionRadiance_i)^2 \\ + \beta_3(PercentReductionRadiance_i)^3 + u_{i},
+\end{multline}
+where $PercentHindu$ is the percentage of citizens identifying as Hindu in regency/city or district $i$ and $PercentReductionRadiance$ is the estimated average reduction in total radiance for that particular regency/city or district (obtained from a separate regression equivalent to Equation \ref{eq:main_reg} where region $i$ is the unit evaluated instead of Bali province). A cubic specification had a better overall fit (measured using Adjusted R^2^) compared to linear or quadratic.
+
+# Results and discussion
+
+```{r include=FALSE}
+library(readxl)
+library(tidyverse)
+library(reshape)
+#javabalinusatenggara <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/tidy_javabalinusatenggara_provinces.xlsx")
+
+javabalinusatenggara <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1provinces.xlsx")
+
+javabalinusatenggara$nyepi <- as.numeric((javabalinusatenggara$date == "2017-03-28") | (javabalinusatenggara$date == "2018-03-17") | (javabalinusatenggara$date == "2019-03-07") | (javabalinusatenggara$date == "2020-03-25") | (javabalinusatenggara$date == "2021-03-14"))
+
+javabalinusatenggara$bali <- as.numeric((javabalinusatenggara$provincename == "Bali"))
+
+# Regression
+one.lm <- lm(log(lightcount) ~ nyepi*bali + factor(provincename) +factor(date), data = subset(javabalinusatenggara, javabalinusatenggara$provincename!="Sulawesi Selatan"))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+library(stargazer)
+# Regression table
+
+stargazer(one.lm, title="Percent Change in Total Radiance on the island (province) of Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+           label="tab:bali",
+          dep.var.labels = "Logged Total Radiance",
+          covariate.labels = c("Nyepi Day", "Bali Island", "Nyepi Day on Bali Island"),
+          keep.stat=c("n","rsq"),
+          keep=c("nyepi","bali","nyepi*bali"),
+          digits = 3,header=FALSE,omit.table.layout = "n",
+          add.lines = list(c("Region Fixed Effects?", "Yes"),
+                           c("Date Fixed Effects?", "Yes")))
+```
+
+Results from estimating Equation \ref{eq:main_reg} are shown in Table \ref{tab:bali}. It can be seen that total radiance on the island of Bali declines by around 110.2% on Nyepi night, relative to other provinces on the same night (this is derived from the -1.102 coefficient estimate). The estimated effect is statistically significant at the 1% level. This demonstrates that even daily changes in human behavior can be accurately detected from nighttime imagery. The $\beta_2$ coefficient indicates that Bali province is, on average, 36.7% brighter than the omitted reference province, which is Yogyakarta. The statistically insignificant $\beta_1$ coefficient indicates that the region as a whole is not darker on Nyepi night, which is most likely due to the fact that individual indicator variables (fixed effects) for each date are controlling for differences in lunar conditions across nights.
+
+```{r include=FALSE}
+library(readxl)
+#javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/tidy_javabalinusatenggara_counties.xlsx")
+
+javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1counties.xlsx")
+
+# Indicator variables for Nyepi Day
+
+javabalinusatenggaracounties$nyepi <- as.numeric((javabalinusatenggaracounties$date == "2017-03-28") | (javabalinusatenggaracounties$date == "2018-03-17") | (javabalinusatenggaracounties$date == "2019-03-07") | (javabalinusatenggaracounties$date == "2020-03-25") | (javabalinusatenggaracounties$date == "2021-03-14"))
+
+# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2017,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2017-03-28"),NA)
+# 
+# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2018,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2018-03-17"),javabalinusatenggaracounties$days_from)
+# 
+# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2019,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2019-03-07"),javabalinusatenggaracounties$days_from)
+# 
+# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2020,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2020-03-25"),javabalinusatenggaracounties$days_from)
+
+```
+
+```{r include=FALSE}
+# Regression
+
+regList <- vector(mode = "list")
+
+#clist <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list.csv", 
+ #   col_names = FALSE)
+  
+clist <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list_new.csv")
+
+for (i in clist) {
+  javabalinusatenggaracounties$county <- as.numeric((javabalinusatenggaracounties$countyname == i))
+ 
+  regList[[i]] <- lm(log(lightcount) ~ nyepi*county + factor(countyno) + factor(date), 
+                     data=subset(javabalinusatenggaracounties,  javabalinusatenggaracounties$provincename!="Sulawesi Selatan"  )                                               
+                     )
+}
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+library(stargazer)
+stargazer(list(regList), title="Percent Change in Total Radiance for Counties (Regencies) in Bali. Each column estimates the effect of Nyepi for a different regency (indicated in the column title). Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          label="tab:county",
+          font.size="tiny",
+          omit = c("countyno","date","Constant"),
+          dep.var.labels = "Logged Total Radiance",
+          column.labels = c("Badung","Bangli", "Buleleng", "Denpasar", "Gianyar", "Jembrana", "Karang Asem", "Klungkung", "Tabanan"),
+   #       keep=c("nyepi","county","nyepi*county"),
+          covariate.labels = c("Nyepi Day", "Regency", "Nyepi Day in that Regency"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,
+          column.sep.width = "-5pt",omit.table.layout = "n",
+   add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"))
+   )
+```
+
+Table \ref{tab:county} displays results from running 9 different versions of Equation \ref{eq:main_reg}. The difference for each regression model (each column) is that the treated unit (originally Bali) is defined as one of the regencies/cities (counties) in Bali province. This table shows the change in total radiance for each regency, relative to all other regencies on the same night, after accounting for pre-existing inter-regency differences in radiance. A few coefficients are particularly interesting. The second least responsive regency in Bali is Jembrana (-0.394). Jembrana is located in the far west of Bali island, only a few miles from the predominantly Muslim island of Java. Jembrana is culturally a little different to the rest of Bali, given its proximity to Java, and is one of the only regions in Bali where the *bilal* can be heard emanating from local mosques. According to the Indonesian census, it has the lowest percentage of Hindus in all of Bali's eight regencies. The city of Denpasar (not considered a regency) has a lower Hindu percentage but is the administrative capital of Bali, and Nyepi rules are strictly enforced there.  
+The most responsive regency is Badung. This is a long narrow regency, extending from the central mountains of Bali to its southernmost tip. It includes a number of extremely important sites for Balinese Hindus, including the beach of Melasti, one of the primary locations for the purification ceremony known as Melasti that takes places 3-4 days before Nyepi. Badung is also home to the airport and the main tourist zones, which would normally produce a lot of nighttime light.
+
+We do not show the regression results here, but we performed the same analysis at the district level (see Appendix). 
+Only a handful of districts do not report reductions that are statistically significant (at the 5% level).
+One of those districts is Melaya in Jembrana regency.
+Melaya is 28% Muslim and only 67% Hindu. Melaya is the westernmost district within the regency of Jembrana, and it includes the port of Gilimanuk, the main connection to the island of Java. It is interesting to note that four of the five districts in Jembrana regency (Melaya, Mendoyo, Negara and Pekutatan) report reductions in radiance less than 60% or statistically indistinguishable from 0%. The percent Hindu for these districts is 67%, 92%, 52%, and 81%, respectively. On average, Bali is 83% Hindu.
+
+```{r eval=FALSE, include=FALSE}
+religionbycounty <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/religionbycounty.xlsx")
+
+library(readxl)
+javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1counties.xlsx")
+
+
+javabalinusatenggaracounties$nyepi <- as.numeric((javabalinusatenggaracounties$date == "2017-03-28") | (javabalinusatenggaracounties$date == "2018-03-17") | (javabalinusatenggaracounties$date == "2019-03-07") | (javabalinusatenggaracounties$date == "2020-03-25") | (javabalinusatenggaracounties$date == "2021-03-14"))
+
+library(readr)
+regList7 <- vector(mode = "list")
+
+percentchangeinlight <- vector()
+
+clist3 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list2.csv")
+
+for (i in clist3) {
+  javabalinusatenggaracounties$county <- as.numeric((javabalinusatenggaracounties$countyname == i))
+ 
+  regList7[[i]] <- lm(log(lightcount+.001) ~ nyepi*county + factor(countyno) + factor(date), 
+                     data=subset(javabalinusatenggaracounties,  javabalinusatenggaracounties$provincename!="Sulawesi Selatan"  )                                               
+                     )
+  
+  percentchangeinlight[i] <- regList7[[i]][["coefficients"]][["nyepi:county"]]
+}
+
+# This code makes a dataframe with county names and % reduction in lights
+coeffdf <- data.frame(clist3,percentchangeinlight)
+library(data.table)
+setnames(coeffdf, "clist3", "countyname",skip_absent = TRUE)
+
+combined <- merge(religionbycounty, coeffdf)
+
+combined <- combined[!is.na(combined$percenthindu), ]
+
+#Now save it:
+
+save(combined,file="county_predictions_new.RData")
+```
+
+
+```{r include=FALSE}
+# Check the issue with Menddoyo district
+load("county_predictions_new.RData")
+combined$percentchangeinlight_sq <- (combined$percentchangeinlight)^2
+combined$percentchangeinlight_cu <- (combined$percentchangeinlight)^3
+two.lm <- lm(percenthindu ~ percentchangeinlight + percentchangeinlight_sq + percentchangeinlight_cu, combined)
+combined$predictedperchindubychangeinlights <- two.lm$fitted
+```
+
+```{r eval=FALSE, include=FALSE}
+library(plm)
+religionbyzipcode <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/religionbyzipcode_clean.xlsx")
+
+javabalinusatenggarazipcodes <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1zipcodes.xlsx")
+
+# Indicator variables for Nyepi Day
+
+javabalinusatenggarazipcodes$nyepi <- as.numeric((javabalinusatenggarazipcodes$date == "2017-03-28") | (javabalinusatenggarazipcodes$date == "2018-03-17") | (javabalinusatenggarazipcodes$date == "2019-03-07") | (javabalinusatenggarazipcodes$date == "2020-03-25") | (javabalinusatenggarazipcodes$date == "2021-03-14"))
+
+regList8 <- vector(mode = "list")
+
+percentchangeinlight2 <- vector()
+
+zlist <-  religionbyzipcode$zipcodeno
+
+
+for (i in zlist) {
+  javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodeno == i))
+ 
+  regList8[[i]] <- plm(log(lightcount+1) ~ nyepi*zipcode + factor(date), data=subset(javabalinusatenggarazipcodes, javabalinusatenggarazipcodes$provincename!="Sulawesi Selatan"
+                                                                            ), index = c("zipcodeno","date"),model = "within")
+  
+  percentchangeinlight2[i] <- regList8[[i]][["coefficients"]][["nyepi:zipcode"]]
+  
+}
+
+#This is John's code to save regList8 (you can delete this in the future):
+#save(regList8, file = "regList8new.Rdata")
+save(percentchangeinlight2, file = "percentchangeinlight2newALLDAYS.Rdata")
+
+# This code makes a dataframe with zipcode names and % reduction in lights
+coeffdf2 <- data.frame(zlist,percentchangeinlight2)
+library(data.table)
+setnames(coeffdf2, "zlist", "zipcodeno",skip_absent = TRUE)
+
+combined2 <- merge(religionbyzipcode, coeffdf2)
+combined2 <- combined2[!is.na(combined2$hindu), ]
+View(combined2)
+# Now save it:
+save(combined2,file="zipcode_predictions_newALLDAYS.RData")
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#zlist <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list.csv")
+load("zipcode_predictions_newALLDAYS.RData")
+# This code makes a dataframe with county names and % reduction in lights
+#coeffdf2 <- data.frame(zlist,percentchangeinlight2)
+#library(data.table)
+#setnames(coeffdf2, "zlist", "zipcodename")
+
+#combined2 <- merge(religionbyzipcode, coeffdf2)
+#combined2 <- combined2[!is.na(combined2$hindu), ]
+```
+
+```{r include=FALSE}
+setnames(combined2, "percentchangeinlight2", "percentchangeinlight")
+
+combined2$percentchangeinlight_sq <- (combined2$percentchangeinlight)^2
+combined2$percentchangeinlight_cu <- (combined2$percentchangeinlight)^3
+three.lm <- lm(hindu ~ percentchangeinlight + percentchangeinlight_sq + percentchangeinlight_cu, combined2)
+#summary(three.lm)
+
+combined2$predictedperchindubychangeinlights2 <- three.lm$fitted
+#pred_r_squared(three.lm)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+stargazer(two.lm, three.lm, title="Percent Hindu Predicted by Percent Change in Total Radiance. Column (1) presents results for all regencies/cities (counties) in our main analysis area (Figure \\ref{fig:map}). Column (2) presents results for districts (zipcodes) in the same area. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.", 
+          omit = "countyname",
+          label="tab:predict",
+          dep.var.labels = c("Percent Hindu","Percent Hindu"),
+          covariate.labels = c("Percent Change in Radiance","(Percent Change in Radiance)$^2$","(Percent Change in Radiance)$^3$"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n")
+```
+
+With these observations in mind, we now turn to the religion prediction results. The results of estimating Equation \ref{eq:predict} using the regency level data are presented in Column (1) of Table \ref{tab:predict}. The R^2^ is 0.777, which implies that 78% of the variation in Percent Hindu in the region can be explained by nighttime imagery (specifically the percentage reduction in total radiance on Nyepi night). Column (2) presents the district (or zipcode) level results. The R^2^ drops to 62% but is still impressive considering the only model input is satellite imagery. In Figure \ref{fig:real_pred}, we plot Percent Hindu from census data along with the predicted Percent Hindu obtained from the nighttime radiance regression model, for both counties and zipcodes.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+plot1<-ggplot(data=combined, aes(x= reorder(countyname, -percenthindu)))+
+    geom_point(aes(y=predictedperchindubychangeinlights),shape=21,fill="pink")+
+    geom_point(aes(y=percenthindu),shape=21,fill="red")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90),legend.position = "bottom",
+        title =element_text(size=12, face='bold'))+
+  scale_color_discrete(name = "Variables", labels = c("Percent Change in Lights", "Predicted Percent Hindu Based on Lights"))+
+  labs(x="Counties by Percent Hindu (Ordered from Greatest to Least)", y="Percent Hindu")
+
+plot2<-ggplot(data=combined2, aes(x= reorder(zipcodeno, -hindu)))+
+  
+    geom_point(aes(y=predictedperchindubychangeinlights2),shape=21,fill="pink")+
+  geom_point(aes(y=hindu),shape=21,fill="red")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 2))+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90),legend.position = "bottom",
+        title =element_text(size=12, face='bold'))+
+  scale_color_discrete(name = "Variables", labels = c("Percent Change in Lights", "Predicted Percent Hindu Based on Lights"))+
+  labs(x="Zip Codes Ordered by Percent Hindu (Highest to Lowest)", y="Percent Hindu") + scale_x_discrete(labels = NULL,breaks=NULL)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=8, fig.asp=1, fig.cap="\\label{fig:real_pred}Percent Hindu: actual values (in red) and predicted values (in pink). Top panel shows counties and bottom panel shows zipcodes (names omitted)."}
+grid.arrange(plot1,plot2, ncol=1)
+```
+
+```{r include=FALSE}
+library(scales)
+library(sf)
+library(ggplot2)
+library(dplyr)
+
+indonesiazipcodes <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm3",layer="gadm36_IDN_3") # Is this important?
+
+countysf1 <- select(combined2,provincename,countyname,zipcodename,hindu, percentchangeinlight)
+
+indonesiazipcodes$combinedcounties1 <- as.numeric(indonesiazipcodes$NAME_2 == "Pasuruan" | indonesiazipcodes$NAME_2 == "Kota Pasuruan" | indonesiazipcodes$NAME_2 == "Mataram" | indonesiazipcodes$NAME_2 == "Probolinggo" | indonesiazipcodes$NAME_2 == "Kota Probolinggo" | indonesiazipcodes$NAME_2 == "Kota Malang" | indonesiazipcodes$NAME_2 == "Malang" | indonesiazipcodes$NAME_2 == "Lumajang")
+
+combinedcounties2 <- filter(indonesiazipcodes, combinedcounties1 == "1")
+
+combinedcounties2 <- select(combinedcounties2, NAME_1, NAME_2, NAME_3, geometry,combinedcounties1)
+
+combinedcounties2_copy <- combinedcounties2
+
+names(combinedcounties2_copy) <- c("provincename", "countyname",  "zipcodename", "geometry", "combinedcounties1")
+
+combinedcounties2_merged <- merge(cbind(combinedcounties2_copy, X=rownames(combinedcounties2_copy)), cbind(countysf1, variable=rownames(countysf1)))
+
+coordinates <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/coordinates.csv")
+
+final.merge <- merge(combinedcounties2_merged,coordinates)
+
+pasuruan <- filter(final.merge, countyname == "Kota Pasuruan" | countyname == "Pasuruan")
+
+mataram <- filter(final.merge, countyname == "Mataram")
+
+probolinggo <- filter(final.merge, countyname == "Kota Probolinggo" | countyname == "Probolinggo")
+
+lumajang <- filter(final.merge, countyname == "Lumajang")
+
+malang <- filter(final.merge, countyname == "Kota Malang" | countyname == "Malang")
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(gridExtra)
+indonesiacounties <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm2",layer="gadm36_IDN_2")
+
+fourcounties <- filter(indonesiacounties, NAME_2 == "Lumajang" | NAME_2 == "Malang" | NAME_2 == "Probolinggo" | NAME_2 == "Pasuruan")
+
+lumajang$perclightchange <- as.numeric(lumajang$percentchangeinlight < 0)
+perclightchange1 <- filter(lumajang, perclightchange == "1")
+
+malang$perclightchange <- as.numeric(malang$percentchangeinlight < 0)
+perclightchange2 <- filter(malang, perclightchange == "1")
+
+probolinggo$perclightchange <- as.numeric(probolinggo$percentchangeinlight < 0)
+perclightchange3 <- filter(probolinggo, perclightchange == "1")
+
+pasuruan$perclightchange <- as.numeric(pasuruan$percentchangeinlight < 0)
+perclightchange4 <- filter(pasuruan, perclightchange == "1")
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+plotA<-ggplot()+
+  geom_sf(data = indonesiacounties, fill = "#737373", color="#d9d9d9")+
+  #geom_sf(data=final.merge)+
+  geom_sf(data = lumajang, aes(fill=hindu), color = "#bdbdbd")+
+  geom_sf(data = malang, aes(fill=hindu),color = "#bdbdbd")+
+  geom_sf(data = probolinggo, aes(fill=hindu),color = "#bdbdbd")+
+  geom_sf(data = pasuruan, aes(fill=hindu), color = "#bdbdbd")+
+  geom_sf(data = fourcounties,fill=NA,color="black")+
+  coord_sf(xlim = c(112.65, 113.5), ylim = c(-8.5, -7.5), expand = FALSE)+
+  annotate("text", x=113.13122998464577, y=-8.13482262912454, label="Lumajang", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=112.65022914834341, y=-8.194012837464141, label="Malang", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=112.8359764876836, y=-7.758637239688438, label="Pasuruan", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=113.28837792453726, y=-7.851855227359778, label="Probolinggo", size=2.75, color = "darkblue", fontface = "bold")+
+  xlab("Longitude") + ylab("Latitude")+
+  guides(fill=guide_colorbar(title="Percent 
+Hindu",title.position = "left",frame.colour = "black"))+
+  scale_fill_gradient(high = "#d95f0e", low = "#ffffe5",                     guide = "colorbar",labels = percent)+
+  theme(panel.grid.major = element_line(
+    color = gray(.5), linetype = "dashed", size = 0.5), 
+    panel.background = element_rect(fill = "aliceblue",color = "black"),
+    legend.position = 'bottom')
+
+plotB<-ggplot()+
+  geom_sf(data = indonesiacounties,fill = "#737373", color="#d9d9d9")+
+  geom_sf(data = final.merge, fill = "#ffffe5", color = "#bdbdbd")+
+  geom_sf(data = perclightchange1, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange2, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange3, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange4, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = fourcounties,fill=NA,color="black")+ # Is the projection wrong???
+  coord_sf(xlim = c(112.65, 113.5), ylim = c(-8.5, -7.5), expand = FALSE)+
+  annotate("text", x=113.13122998464577, y=-8.13482262912454, label="Lumajang", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=112.65022914834341, y=-8.194012837464141, label="Malang", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=112.8359764876836, y=-7.758637239688438, label="Pasuruan", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=113.28837792453726, y=-7.851855227359778, label="Probolinggo", size=2.75, color = "darkblue", fontface = "bold")+
+  xlab("Longitude") + ylab("Latitude")+
+  guides(fill=guide_colorbar(title="Percent Reduction 
+in Radiance",barwidth = 8,frame.colour = "black"))+
+  # scale_fill_gradient2(high = "#d95f0e", low = "#ffffe5", midpoint=0.1,
+  #                     guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
+    # scale_fill_gradientn(colours = c("#ffffe5","#FFF6D9","#FAC192","#F4A770","#d95f0e"),
+    #                      values = c(0,0.1713595,0.4840651,0.7038904,1),
+                             scale_fill_gradientn(colours = #c("#ffffe5","#ffffe5","#FAC192","#F4A770","#d95f0e"),
+                                                    c("#ffffe5","#ffffe5","#ffffe5","#d95f0e","#d95f0e"),
+                        # values = c(0,0.45,0.4840651,0.7038904,1),
+                        values = c(0,0.2,0.25,0.5,1),
+                      guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
+  theme(panel.grid.major = element_line(
+    color = gray(.5), linetype = "dashed", size = 0.5), 
+    panel.background = element_rect(fill = "aliceblue",color = "black"),
+    legend.position = 'bottom')
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=8, fig.asp=1, fig.cap="\\label{fig:side_by_side}Two maps showing four regencies and their districts on the island of Java. On the left, districts are color coded by Percent Hindu. On the right, districts are color coded by Percent Reduction in Radiance during Nyepi. For the radiance map, any district with an increase in night lights during Nyepi is recorded as a reduction of 0 and the color scale is adjusted to better match the map on the left."}
+grid.arrange(plotA,plotB, ncol=2)
+```
+
+As a further illustration, in Figure \ref{fig:side_by_side} we display two choropleth maps of the same area (the brown rectangle in Figure \ref{fig:map} that lies to the east of Bali). For historical and geographical reasons, there are pockets of Hindus living on the mainly Muslim island of Java. Most of these communities are concentrated near the base of Mount Bromo (which is an important pilgrimage site for Hindus and is located in the southeastern corner of Pasuruan regency). The maps show four regencies and their districts in Eastern Java. The map on the left displays Percent Hindu according to census data and the map on the right displays the Percent Reduction in Total Radiance during Nyepi. The similarity is apparent. In Figure \ref{fig:LOMBOKside_by_side}, we perform a similar analysis for the island of Lombok, which lies directly east of Bali (see the brown rectangle in Figure \ref{fig:map}). Communities of mainly Hindu Indonesians living in the city of Mataram can be detected using changes in total radiance during Nyepi.  These results are even more striking when you consider that, unlike on Bali, Nyepi is not strictly enforced on the islands of Java or Lombok; compliance is largely voluntary.
+
+```{r include=FALSE}
+library(scales)
+library(sf)
+library(ggplot2)
+library(dplyr)
+
+indonesiazipcodes <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm3",layer="gadm36_IDN_3") # Is this important?
+
+countysf1 <- select(combined2,provincename,countyname,zipcodename,hindu, percentchangeinlight)
+
+indonesiazipcodes$combinedcounties1 <- as.numeric(indonesiazipcodes$NAME_2 == "Lombok Tengah" | indonesiazipcodes$NAME_2 == "Lombok Timur" | indonesiazipcodes$NAME_2 == "Lombok Utara" | indonesiazipcodes$NAME_2 == "Lombok Barat" | indonesiazipcodes$NAME_2 == "Mataram" )
+
+combinedcounties2 <- filter(indonesiazipcodes, combinedcounties1 == "1")
+
+combinedcounties2 <- select(combinedcounties2, NAME_1, NAME_2, NAME_3, geometry,combinedcounties1)
+
+combinedcounties2_copy <- combinedcounties2
+
+names(combinedcounties2_copy) <- c("provincename", "countyname",  "zipcodename", "geometry", "combinedcounties1")
+
+combinedcounties2_merged <- merge(cbind(combinedcounties2_copy, X=rownames(combinedcounties2_copy)), cbind(countysf1, variable=rownames(countysf1)))
+
+#coordinates <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/coordinates.csv")
+
+final.merge <- combinedcounties2_merged
+
+lomboktengah <- filter(final.merge, countyname == "Lombok Tengah" )
+
+lomboktimur <- filter(final.merge, countyname == "Lombok Timur" )
+
+lombokutara <- filter(final.merge, countyname == "Lombok Utara" )
+
+lombokbarat <- filter(final.merge, countyname == "Lombok Barat")
+
+mataram <- filter(final.merge, countyname == "Mataram")
+
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(gridExtra)
+indonesiacounties <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm2",layer="gadm36_IDN_2")
+
+lombokcounties <- filter(indonesiacounties, NAME_2 == "Lombok Tengah" | NAME_2 == "Lombok Timur" | NAME_2 == "Lombok Utara" | NAME_2 == "Lombok Barat" | NAME_2 == "Mataram" )
+
+lomboktengah$perclightchange <- as.numeric(lomboktengah$percentchangeinlight < 0)
+perclightchange1 <- filter(lomboktengah, perclightchange == "1")
+
+lomboktimur$perclightchange <- as.numeric(lomboktimur$percentchangeinlight < 0)
+perclightchange2 <- filter(lomboktimur, perclightchange == "1")
+
+lombokutara$perclightchange <- as.numeric(lombokutara$percentchangeinlight < 0)
+perclightchange3 <- filter(lombokutara, perclightchange == "1")
+
+lombokbarat$perclightchange <- as.numeric(lombokbarat$percentchangeinlight < 0)
+perclightchange4 <- filter(lombokbarat, perclightchange == "1")
+
+mataram$perclightchange <- as.numeric(mataram$percentchangeinlight < 0)
+perclightchange5 <- filter(mataram, perclightchange == "1")
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+plotA<-ggplot()+
+  geom_sf(data = indonesiacounties, fill = "#737373", color="#d9d9d9")+
+  #geom_sf(data=final.merge)+
+  geom_sf(data = lomboktengah, aes(fill=hindu), color = "#bdbdbd")+
+  geom_sf(data = lomboktimur, aes(fill=hindu),color = "#bdbdbd")+
+  geom_sf(data = lombokutara, aes(fill=hindu),color = "#bdbdbd")+
+  geom_sf(data = lombokbarat, aes(fill=hindu), color = "#bdbdbd")+
+  geom_sf(data = mataram, aes(fill=hindu), color = "#bdbdbd")+
+  geom_sf(data = lombokcounties,fill=NA,color="black")+
+  coord_sf(xlim = c(115.771564, 116.762388), ylim = c(-8.938315, -8.181919), expand = FALSE)+
+  annotate("text", x=115.992798, y=-8.801393,    label="Lombok Barat", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=115.992798, y=-8.587585, label="Mataram", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.275242, y=-8.733178,  label="Lombok Tengah", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.264108, y=-8.354935, label="Lombok Utara", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.507568, y=-8.510771,  label="Lombok Timur", size=2.75, color = "darkblue", fontface = "bold")+
+  xlab("Longitude") + ylab("Latitude")+
+  guides(fill=guide_colorbar(title="Percent 
+Hindu",title.position = "left",frame.colour = "black"))+
+  scale_fill_gradientn(colours = c("#ffffe5","#ffffe5","#FAC192","#F4A770","#d95f0e"),                         values = c(0,0.2,0.3,0.4,1), guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
+  theme(panel.grid.major = element_line(
+    color = gray(.5), linetype = "dashed", size = 0.5), 
+    panel.background = element_rect(fill = "aliceblue",color = "black"),
+    legend.position = 'bottom')
+
+plotB<-ggplot()+
+  geom_sf(data = indonesiacounties,fill = "#737373", color="#d9d9d9")+
+  geom_sf(data = final.merge, fill = "#ffffe5", color = "#bdbdbd")+
+  geom_sf(data = perclightchange1, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange2, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange3, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange4, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = perclightchange5, aes(fill=-percentchangeinlight), color = "#bdbdbd")+
+  geom_sf(data = lombokcounties,fill=NA,color="black")+ # Is the projection wrong???
+  coord_sf(xlim = c(115.771564, 116.762388), ylim = c(-8.938315, -8.181919), expand = FALSE)+
+ annotate("text", x=115.992798, y=-8.801393,    label="Lombok Barat", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=115.992798, y=-8.587585, label="Mataram", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.275242, y=-8.733178,  label="Lombok Tengah", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.264108, y=-8.354935, label="Lombok Utara", size=2.75, color = "darkblue", fontface = "bold")+
+  annotate("text", x=116.507568, y=-8.510771,  label="Lombok Timur", size=2.75, color = "darkblue", fontface = "bold")+
+  xlab("Longitude") + ylab("Latitude")+
+  guides(fill=guide_colorbar(title="Percent Reduction 
+in Radiance",barwidth = 8,frame.colour = "black"))+
+  # scale_fill_gradient2(high = "#d95f0e", low = "#ffffe5", midpoint=0.1,
+  #                      guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
+    # scale_fill_gradientn(colours = c("#ffffe5","#FFF6D9","#FAC192","#F4A770","#d95f0e"),
+    #                      values = c(0,0.1713595,0.4840651,0.7038904,1),
+                            scale_fill_gradientn(colours = c("#ffffe5","#ffffe5","#ffffe5","#F4A770","#d95f0e"),
+                                             #       c("#ffffe5","#ffffe5","#ffffe5","#F4A770","#d95f0e"),
+                        values = c(0,0.4,0.7,0.8,1),
+                      #  values = c(0,0.6,0.69,0.7,1), 
+                      guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
+  theme(panel.grid.major = element_line(
+    color = gray(.5), linetype = "dashed", size = 0.5), 
+    panel.background = element_rect(fill = "aliceblue",color = "black"),
+    legend.position = 'bottom')
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide', fig.width=8, fig.asp=1, fig.cap="\\label{fig:LOMBOKside_by_side}Two maps showing five regencies/cities and their districts on the island of Lombok. On the left, districts are color coded by Percent Hindu. On the right, districts are color coded by Percent Reduction in Radiance during Nyepi. For the radiance map, any district with an increase in night lights during Nyepi is recorded as a reduction of 0 and the color scale is adjusted to better match the map on the left."}
+grid.arrange(plotA,plotB, ncol=2)
+```
+
+# Conclusions
+
+Using NASA's Black Marble product suite, specifically the daily at-sensor top of atmosphere nighttime radiance product, we find that total radiance on the island of Bali declines by close to 100% during the Nyepi day of silence. This is a significant finding for a number of reasons. We believe this to be the first demonstration that this Hindu holiday can be observed from space. This is also the first time that satellite imagery has been used to accurately predict the religious affiliation of human populations at a high spatial resolution (the equivalent of the zipcode level). 
+
+Our results have implications for future research based on nighttime lights data. First, we successfully demonstrate a method for accurately detecting changes in human behavior that take place on one night and one night only. Most of the existing research using nighttime imagery to study short-term patterns in energy use and human behavior has studied events that last for weeks or months. For example, Christmas lights are put up weeks before Christmas Day [@roman2015holidays] and power outages in Puerto Rico following Hurricane Maria lasted weeks, sometimes months [@roman2019satellite;@azad2021spatio]. Thus, we hope that our work serves as a template for other researchers hoping to use nighttime imagery to study short duration (i.e. 24 hour) events.  
+
+In particular, our methodology could be used to study one-day phenomena beyond religion and culture that result in macro-scale patterns of energy use. Some examples include large concerts and music festivals, the "Earth Hour" organized by the World Wide Fund for Nature, or cities that organized lights out events to memorialize victims of COVID-19. In fact, at the United Nations Framework Convention on Climate Change COP 13 conference in Bali, there was a proposal to introduce a global Nyepi or World Silent Day as an emissions
+reduction initiative that could be scientifically measured [@lundberg2020balinese].
+These and other events are essentially part of the dynamics of human ecosystems [@machlis1997human]. 
+There is something beautiful (and spiritual) about a large island going completely dark and then filling with light again. Nyepi marks the beginning of a new human season, much like snow cover or green vegetation marks the beginning of new natural seasons.
+We have shown that satellite data can help us to understand the seasonality of human ecoystems, an Earth Systems pattern that has been understudied compared to other natural or physical phenomena [@sutton2002global;@pettorelli2018satellite;@pasetto2018integration].
+
+Second, although we do not explore the issue in much detail in this current paper, our work raises important questions about the most appropriate nighttime data products to use to study 24-hour events. In particular, there appears to be a trade-off between coverage and quality and the optimal compromise is not immediately clear. Although we have used the at-sensor top-of-atmosphere data set within VNP46A1, it would be interesting to attempt to replicate our study using the corrected nightlight data sets contained within VNP46A2 (perhaps over a longer time horizon to deal with cloud cover issues). 
+
+Finally, it is important to draw attention to the limitations of our analysis and reasons why our approach may not be as applicable to other settings. First, the fact that the event we study is lunar-based is extremely fortuitous. Nightlight analysis is less susceptible to moon contamination during a new moon and since Nyepi always falls on a new moon, this greatly reduces the possibility of bias due to lunar conditions. Our approach may not work as well for events that, for example, coincide with a full moon. Second, 
+we have controlled for variation in cloud cover using region and date specific fixed effects. This does not specifically control for the extremely unlikely possibility that, for the last five years, it has only been cloudy over Bali (and not neighboring islands) and only on the night of Nyepi.
+Both the VNP46A1 and VNP46A2 Black Marble product suites provide cloud mask flags. Visual inspection of these data sets confirms that when Bali is covered by clouds so are most of the other islands included in our analysis, minimizing concerns about potential bias. But other human events that may be temporally and geographically correlated with cloud cover, such as celebrations at the beginning of the monsoon or rainy season (e.g. *Teej* in Nepal), would be more difficult to study using our methodology.
+
+\newpage
+
+# References
+

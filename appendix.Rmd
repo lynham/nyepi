@@ -1,0 +1,200 @@
+---
+title: "Appendix"
+output:
+  pdf_document:
+    keep_tex: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\setcounter{table}{0}
+\renewcommand{\thetable}{A\arabic{table}}
+
+```{r include=FALSE}
+library(readxl)
+javabalinusatenggarazipcodes <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1zipcodes.xlsx")
+
+# Indicator variables for Nyepi Day
+
+javabalinusatenggarazipcodes$nyepi <- as.numeric((javabalinusatenggarazipcodes$date == "2017-03-28") | (javabalinusatenggarazipcodes$date == "2018-03-17") | (javabalinusatenggarazipcodes$date == "2019-03-07") | (javabalinusatenggarazipcodes$date == "2020-03-25") | (javabalinusatenggarazipcodes$date == "2021-03-14"))
+
+# javabalinusatenggarazipcodes$days_from <- ifelse(javabalinusatenggarazipcodes$year==2017,as.Date(javabalinusatenggarazipcodes$newdate) - as.Date("2017-03-28"),NA)
+# 
+# javabalinusatenggarazipcodes$days_from <- ifelse(javabalinusatenggarazipcodes$year==2018,as.Date(javabalinusatenggarazipcodes$newdate) - as.Date("2018-03-17"),javabalinusatenggarazipcodes$days_from)
+# 
+# javabalinusatenggarazipcodes$days_from <- ifelse(javabalinusatenggarazipcodes$year==2019,as.Date(javabalinusatenggarazipcodes$newdate) - as.Date("2019-03-07"),javabalinusatenggarazipcodes$days_from)
+# 
+# javabalinusatenggarazipcodes$days_from <- ifelse(javabalinusatenggarazipcodes$year==2020,as.Date(javabalinusatenggarazipcodes$newdate) - as.Date("2020-03-25"),javabalinusatenggarazipcodes$days_from)
+
+```
+
+```{r include=FALSE}
+# Regressions 
+library(readr)
+library(plm)
+
+#1
+regList3 <- vector(mode = "list")
+
+zlist1 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list1.csv")
+
+for (i in zlist1) {
+  javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodename == i))
+ 
+  regList3[[i]] <- plm(log(lightcount+.001) ~ nyepi*zipcode + factor(date), 
+                       #data=javabalinusatenggarazipcodes
+                       data=subset(javabalinusatenggarazipcodes, javabalinusatenggarazipcodes$provincename!="Sulawesi Selatan"  )
+                       
+                       , index = c("zipcodeno","date"),model = "within")
+}
+
+#2
+regList4 <- vector(mode = "list")
+
+zlist2 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list2.csv")
+
+for (i in zlist2) {
+  javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodename == i))
+ 
+  regList4[[i]] <- plm(log(lightcount+.001) ~ nyepi*zipcode + factor(date), 
+                       #data=javabalinusatenggarazipcodes
+                       data=subset(javabalinusatenggarazipcodes, javabalinusatenggarazipcodes$provincename!="Sulawesi Selatan"  )
+                       
+                       , index = c("zipcodeno","date"),model = "within")
+}
+
+#3
+regList5 <- vector(mode = "list")
+
+zlist3 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list3.csv")
+
+for (i in zlist3) {
+  javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodename == i))
+ 
+  regList5[[i]] <- plm(log(lightcount+.001) ~ nyepi*zipcode + factor(date), 
+                       #data=javabalinusatenggarazipcodes
+                       data=subset(javabalinusatenggarazipcodes, javabalinusatenggarazipcodes$provincename!="Sulawesi Selatan"  )
+                       
+                       , index = c("zipcodeno","date"),model = "within")
+}
+
+#4
+regList6 <- vector(mode = "list")
+
+zlist4 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list4.csv")
+
+for (i in zlist4) {
+  javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodename == i))
+ 
+  regList6[[i]] <- plm(log(lightcount+.001) ~ nyepi*zipcode + factor(date), 
+                       #data=javabalinusatenggarazipcodes
+                       data=subset(javabalinusatenggarazipcodes, javabalinusatenggarazipcodes$provincename!="Sulawesi Selatan"  )
+                       
+                       , index = c("zipcodeno","date"),model = "within")
+}
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+library(stargazer)
+stargazer(list(regList3[1:10]), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+          omit = c("date"),
+          column.labels = c("Abiansemal",	"Kuta",	"Kuta Selatan",	"Kuta Utara",	"Mengwi",	"Petang",	"Bangli",	"Kintamani",	"Susut",	"Tembuku"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-5pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes")))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+
+stargazer(c(regList3[11:15],list(regList4[1:5])), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+           omit = c("date"),
+          column.labels = c("Banjar",	"Buleleng",	"Busungbiu",	"Gerokgak",	"Kubutambahan", "Sawan","Seririt","Sukasada","Tejakula","Denpasar Barat"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          
+          keep.stat=c("n","rsq"),
+          
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-5pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes")))
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+
+stargazer(list(regList4[6:15]), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+           omit = c("date"),
+          column.labels = c("Denpasar Selatan","Denpasar Timur","Denpasar Utara","Blahbatuh","Gianyar","Payangan","Sukawati","Tampaksiring","Tegallalang","Ubud"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-10pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes")))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+
+stargazer(list(regList5[1:10]), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+           omit = c("date"),
+          column.labels = c("Jembrana","Melaya","Mendoyo","Negara","Pekutatan","Abang","Bebandem","Karangasem","Kubu","Manggis"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-10pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes")))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+
+stargazer(c(list(regList5[11:14]),list(regList6[1:6])), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+           omit = c("date"),
+          column.labels = c("Rendang","Selat","Sidemen","Banjarangkan","Dawan","Klungkung","Nusapenida","Baturiti","Kediri","Kerambitan"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-10pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes"))
+          )
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# Regression table
+
+stargazer(list(regList6[7:13]), title="Percent Change in Total Radiance for Districts in Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
+          font.size="tiny",
+          dep.var.labels = "Logged Total Radiance",
+           omit = c("date"),
+          column.labels = c("Marga","Penebel","Pupuan","Selemadeg","Selemadeg Barat","Selemadeg Timur","Tabanan"),
+          covariate.labels = c("Nyepi Day", "Nyepi Day in that Zip Code"),
+          keep.stat=c("n","rsq"),
+          digits = 3,header=FALSE,omit.table.layout = "n",column.sep.width = "-10pt",
+          add.lines = list(c("Region Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+                           c("Date Fixed Effects?", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes","Yes")))
+```
+
+
+
+
+
+
+
