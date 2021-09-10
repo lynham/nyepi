@@ -1,0 +1,122 @@
+provinceno,provincename,countyno,countyname,zipcodeno,zipcodename,latitude,longitude
+11,Jawa Timur,504,Kota Malang,625,Blimbing,-7.948818872,112.6499749
+11,Jawa Timur,504,Kota Malang,626,Kedungkandang,-8.009355426,112.65223
+11,Jawa Timur,504,Kota Malang,627,Klojen,-7.973841073,112.6232092
+11,Jawa Timur,504,Kota Malang,628,Lowokwaru,-7.936289762,112.6170411
+11,Jawa Timur,504,Kota Malang,629,Sukun,-7.996766782,112.6093884
+11,Jawa Timur,506,Kota Pasuruan,632,Bugulkidul,-7.641619503,112.9359979
+11,Jawa Timur,506,Kota Pasuruan,633,Gadingrejo,-7.638864292,112.8854942
+11,Jawa Timur,506,Kota Pasuruan,634,Purworejo,-7.659022317,112.8963726
+11,Jawa Timur,507,Kota Probolinggo,635,Kademangan,-7.768996391,113.1790854
+11,Jawa Timur,507,Kota Probolinggo,636,Kanigaran,-7.757935682,113.2029163
+11,Jawa Timur,507,Kota Probolinggo,637,Kedopok,-7.803171822,113.1903113
+11,Jawa Timur,507,Kota Probolinggo,638,Mayangan,-7.741059115,113.2183641
+11,Jawa Timur,507,Kota Probolinggo,639,Wonoasih,-7.793832308,113.22906
+11,Jawa Timur,158,Lumajang,667,Candipuro,-8.182995319,113.0485723
+11,Jawa Timur,158,Lumajang,668,Gucialit,-8.025358996,113.1330146
+11,Jawa Timur,158,Lumajang,669,Jatiroto,-8.134791203,113.326019
+11,Jawa Timur,158,Lumajang,670,Kedungjajang,-8.043778856,113.2103299
+11,Jawa Timur,158,Lumajang,671,Klakah,-8.00230598,113.2574556
+11,Jawa Timur,158,Lumajang,672,Kunir,-8.218479994,113.2255531
+11,Jawa Timur,158,Lumajang,673,Lumajang,-8.128154721,113.2187111
+11,Jawa Timur,158,Lumajang,674,Padang,-8.092288827,113.1594008
+11,Jawa Timur,158,Lumajang,675,Pasirian,-8.253165922,113.0944315
+11,Jawa Timur,158,Lumajang,676,Pasrujambe,-8.085114252,112.975722
+11,Jawa Timur,158,Lumajang,677,Pronojiwo,-8.182400724,112.9366496
+11,Jawa Timur,158,Lumajang,678,Randuagung,-8.056597192,113.3008887
+11,Jawa Timur,158,Lumajang,679,Ranuyoso,-7.940212757,113.2406548
+11,Jawa Timur,158,Lumajang,680,Rowokangkung,-8.178903387,113.3081637
+11,Jawa Timur,158,Lumajang,681,Senduro,-8.024908134,113.0263847
+11,Jawa Timur,158,Lumajang,682,Sukodono,-8.095341077,113.2281917
+11,Jawa Timur,158,Lumajang,683,Sumbersuko,-8.153279564,113.1746226
+11,Jawa Timur,158,Lumajang,684,Tekung,-8.168481633,113.253887
+11,Jawa Timur,158,Lumajang,685,Tempeh,-8.208714969,113.1712529
+11,Jawa Timur,158,Lumajang,686,Tempursari,-8.286651439,112.9526566
+11,Jawa Timur,158,Lumajang,687,Yosowilangun,-8.255587701,113.2744458
+11,Jawa Timur,162,Malang,721,Ampelgading,-8.227056642,112.8639167
+11,Jawa Timur,162,Malang,722,Bantur,-8.309299785,112.5276902
+11,Jawa Timur,162,Malang,723,Bululawang,-8.097892914,112.6365931
+11,Jawa Timur,162,Malang,724,Dampit,-8.214258657,112.7328938
+11,Jawa Timur,162,Malang,725,Dau,-7.94706818,112.5079546
+11,Jawa Timur,162,Malang,726,Donomulyo,-8.324675806,112.4123415
+11,Jawa Timur,162,Malang,727,Gedangan,-8.342840179,112.6091661
+11,Jawa Timur,162,Malang,728,Gondanglegi,-8.149515655,112.6175301
+11,Jawa Timur,162,Malang,729,Jabung,-7.945941661,112.769953
+11,Jawa Timur,162,Malang,730,Kalipare,-8.210471543,112.4202008
+11,Jawa Timur,162,Malang,731,Karangploso,-7.859387542,112.5791772
+11,Jawa Timur,162,Malang,732,Kasembon,-7.798088892,112.3221528
+11,Jawa Timur,162,Malang,733,Kepanjen,-8.135569408,112.5577094
+11,Jawa Timur,162,Malang,734,Kromengan,-8.124507308,112.4758846
+11,Jawa Timur,162,Malang,735,Lawang,-7.840894841,112.6926956
+11,Jawa Timur,162,Malang,736,Ngajum,-8.052030109,112.5248235
+11,Jawa Timur,162,Malang,737,Ngantang,-7.892952029,112.3511385
+11,Jawa Timur,162,Malang,738,Pagak,-8.246548562,112.5030259
+11,Jawa Timur,162,Malang,739,Pagelaran,-8.195589535,112.5904463
+11,Jawa Timur,162,Malang,740,Pakis,-7.958006371,112.6955094
+11,Jawa Timur,162,Malang,741,Pakisaji,-8.060153823,112.5906943
+11,Jawa Timur,162,Malang,742,Poncokusumo,-8.060539341,112.8146844
+11,Jawa Timur,162,Malang,743,Pujon,-7.840759919,112.4300588
+11,Jawa Timur,162,Malang,744,Singosari,-7.876376201,112.6418738
+11,Jawa Timur,162,Malang,745,Sumber Pucung,-8.160517497,112.4845489
+11,Jawa Timur,162,Malang,746,Sumbermanjing,-8.330683194,112.699555
+11,Jawa Timur,162,Malang,747,Tajinan,-8.056873016,112.6707503
+11,Jawa Timur,162,Malang,748,Tirto Yudo,-8.250227032,112.8153196
+11,Jawa Timur,162,Malang,749,Tumpang,-8.003926457,112.7456384
+11,Jawa Timur,162,Malang,750,Turen,-8.175271613,112.6891933
+11,Jawa Timur,162,Malang,751,Wagir,-7.994047482,112.5416929
+11,Jawa Timur,162,Malang,752,Wajak,-8.127069902,112.7453001
+11,Jawa Timur,162,Malang,753,Wonosari,-8.059822395,112.4781683
+11,Jawa Timur,170,Pasuruan,836,Bangil,-7.591778,112.811144
+11,Jawa Timur,170,Pasuruan,837,Beji,-7.597566,112.750701
+11,Jawa Timur,170,Pasuruan,838,Gempol,-7.592196013,112.6797456
+11,Jawa Timur,170,Pasuruan,839,Gondang Wetan,-7.700799,112.913478
+11,Jawa Timur,170,Pasuruan,840,Grati,-7.744602,113.009657
+11,Jawa Timur,170,Pasuruan,841,Kejayan,-7.740511,112.839238
+11,Jawa Timur,170,Pasuruan,842,Kraton,-7.596959934,112.8576553
+11,Jawa Timur,170,Pasuruan,843,Lekok,-7.676116,113.009666
+11,Jawa Timur,170,Pasuruan,844,Lumbang,-7.820304,112.98136
+11,Jawa Timur,170,Pasuruan,845,Nguling,-7.719651,113.055211
+11,Jawa Timur,170,Pasuruan,846,Pandaan,-7.649952754,112.6979059
+11,Jawa Timur,170,Pasuruan,847,Pasrepan,-7.788659,112.885822
+11,Jawa Timur,170,Pasuruan,848,Pohjentrek,-7.679532957,112.8767215
+11,Jawa Timur,170,Pasuruan,849,Prigen,-7.699306,112.641291
+11,Jawa Timur,170,Pasuruan,850,Purwodadi,-7.801713,112.718423
+11,Jawa Timur,170,Pasuruan,851,Purwosari,-7.763126,112.721754
+11,Jawa Timur,170,Pasuruan,852,Puspo,-7.833172,112.880661
+11,Jawa Timur,170,Pasuruan,853,Rejoso,-7.675984,112.953259
+11,Jawa Timur,170,Pasuruan,854,Rembang,-7.64519435,112.7917453
+11,Jawa Timur,170,Pasuruan,855,Sukorejo,-7.693225,112.729863
+11,Jawa Timur,170,Pasuruan,856,Tosari,-7.902958,112.90474
+11,Jawa Timur,170,Pasuruan,857,Tutur,-7.898147697,112.8194697
+11,Jawa Timur,170,Pasuruan,858,Winongan,-7.74656,112.944928
+11,Jawa Timur,170,Pasuruan,859,Wonorejo,-7.717304,112.787168
+11,Jawa Timur,173,Probolinggo,881,Bantaran,-7.873271,113.190012
+11,Jawa Timur,173,Probolinggo,882,Banyuanyar,-7.844087051,113.3068697
+11,Jawa Timur,173,Probolinggo,883,Besuk,-7.789482,113.477423
+11,Jawa Timur,173,Probolinggo,884,Dringu,-7.790865,113.257175
+11,Jawa Timur,173,Probolinggo,885,Gading,-7.859573,113.473951
+11,Jawa Timur,173,Probolinggo,886,Gending,-7.796476,113.305545
+11,Jawa Timur,173,Probolinggo,887,Kotaanyar,-7.762745,113.556818
+11,Jawa Timur,173,Probolinggo,888,Kraksaan,-7.755275,113.430841
+11,Jawa Timur,173,Probolinggo,889,Krejengan,-7.800419,113.412581
+11,Jawa Timur,173,Probolinggo,890,Krucil,-7.937343,113.500222
+11,Jawa Timur,173,Probolinggo,891,Kuripan,-7.899927905,113.1534528
+11,Jawa Timur,173,Probolinggo,892,Leces,-7.875845256,113.2297594
+11,Jawa Timur,173,Probolinggo,893,Lumbang,-7.847699,113.047125
+11,Jawa Timur,173,Probolinggo,894,Maron,-7.840082,113.360221
+11,Jawa Timur,173,Probolinggo,895,Paiton,-7.720697,113.520423
+11,Jawa Timur,173,Probolinggo,896,Pajarakan,-7.774367,113.368831
+11,Jawa Timur,173,Probolinggo,897,Pakuniran,-7.823149,113.553363
+11,Jawa Timur,173,Probolinggo,898,Sukapura,-7.916836,113.014764
+11,Jawa Timur,173,Probolinggo,899,Sumber,-7.959322501,113.0696915
+11,Jawa Timur,173,Probolinggo,900,Sumberasih,-7.774816826,113.1485009
+11,Jawa Timur,173,Probolinggo,901,Tegalsiwalan,-7.863117,113.264787
+11,Jawa Timur,173,Probolinggo,902,Tiris,-7.954303,113.383805
+11,Jawa Timur,173,Probolinggo,903,Tongas,-7.759578,113.08733
+11,Jawa Timur,173,Probolinggo,904,Wonomerto,-7.82574,113.153949
+20,Nusa Tenggara Barat,274,Mataram,1142,Ampenan,-8.568889,116.086712
+20,Nusa Tenggara Barat,274,Mataram,1143,Cakranegara,-8.589303368,116.1290296
+20,Nusa Tenggara Barat,274,Mataram,1144,Mataram,-8.599918,116.105605
+20,Nusa Tenggara Barat,274,Mataram,1145,Sandubaya,-8.597578,116.155738
+20,Nusa Tenggara Barat,274,Mataram,1146,Sekarbela,-8.609575,116.085504
+20,Nusa Tenggara Barat,274,Mataram,1147,Selaparang,-8.569015,116.110187
