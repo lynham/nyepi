@@ -31,12 +31,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r include=FALSE}
 library("sf")
 library("rnaturalearth")
-library("rnaturalearthdata")
+library(rnaturalearthdata)
 library(readxl)
 library(data.table)
 library(ggplot2)
 library(gridExtra)
 library(readr)
+library(stargazer)
 ```
 
 
@@ -68,23 +69,10 @@ In this paper, we propose using an econometric method (difference-in-differences
 ## Study area
 
 ```{r include=FALSE}
-library("ggplot2")
 theme_set(theme_bw())
-
-
-#library(s2)
-#world <- st_as_sf(s2_data_tbl_countries)
-
 world <- ne_countries(scale = "medium", returnclass = "sf")
-
 library("ggspatial")
-#world_points<- st_centroid(world, check=FALSE)
-
-
-
-#world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
-
-bali<-data.frame(longitude=115.091831,latitude=-8.341536)
+bali<-data.frame(longitude=115.091831,latitude=-8.341536) # Needed?
 ```
 
 ```{r include=FALSE}
@@ -96,7 +84,6 @@ bali<-data.frame(longitude=115.091831,latitude=-8.341536)
    coord_sf(xlim = c(95.0405, 141.0338), ylim = c(-11.1660, 5.7417), expand = FALSE, datum = NA) + 
   theme_void() +
    theme(panel.background = element_rect(fill = "azure"), panel.border = element_rect(fill = NA))
-   #theme(panel.background = element_rect(fill = "azure"),     panel.border = element_rect(fill = NA))
 )
 ```
 
@@ -206,22 +193,14 @@ where $PercentHindu$ is the percentage of citizens identifying as Hindu in regen
 library(readxl)
 library(tidyverse)
 library(reshape)
-#javabalinusatenggara <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/tidy_javabalinusatenggara_provinces.xlsx")
-
-javabalinusatenggara <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1provinces.xlsx")
-
+javabalinusatenggara <- read_excel("VNP46A1provinces.xlsx")
 javabalinusatenggara$nyepi <- as.numeric((javabalinusatenggara$date == "2017-03-28") | (javabalinusatenggara$date == "2018-03-17") | (javabalinusatenggara$date == "2019-03-07") | (javabalinusatenggara$date == "2020-03-25") | (javabalinusatenggara$date == "2021-03-14"))
-
 javabalinusatenggara$bali <- as.numeric((javabalinusatenggara$provincename == "Bali"))
-
 # Regression
 one.lm <- lm(log(lightcount) ~ nyepi*bali + factor(provincename) +factor(date), data = subset(javabalinusatenggara, javabalinusatenggara$provincename!="Sulawesi Selatan"))
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-library(stargazer)
-# Regression table
-
 stargazer(one.lm, title="Percent Change in Total Radiance on the island (province) of Bali. Estimated regression coefficients are displayed with their associated standard errors underneath in parentheses. Asterisks indicate the results of individual two-sided tests of statistical significance: $^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.",
            label="tab:bali",
           dep.var.labels = "Logged Total Radiance",
@@ -236,35 +215,16 @@ stargazer(one.lm, title="Percent Change in Total Radiance on the island (provinc
 Results from estimating Equation \ref{eq:main_reg} are shown in Table \ref{tab:bali}. It can be seen that total radiance on the island of Bali declines by around 110.2% on Nyepi night, relative to other provinces on the same night (this is derived from the -1.102 coefficient estimate). The estimated effect is statistically significant at the 1% level. This demonstrates that even daily changes in human behavior can be accurately detected from nighttime imagery. The $\beta_2$ coefficient indicates that Bali province is, on average, 36.7% brighter than the omitted reference province, which is Yogyakarta. The statistically insignificant $\beta_1$ coefficient indicates that the region as a whole is not darker on Nyepi night, which is most likely due to the fact that individual indicator variables (fixed effects) for each date are controlling for differences in lunar conditions across nights.
 
 ```{r include=FALSE}
-library(readxl)
-#javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/tidy_javabalinusatenggara_counties.xlsx")
-
 javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1counties.xlsx")
-
 # Indicator variables for Nyepi Day
-
 javabalinusatenggaracounties$nyepi <- as.numeric((javabalinusatenggaracounties$date == "2017-03-28") | (javabalinusatenggaracounties$date == "2018-03-17") | (javabalinusatenggaracounties$date == "2019-03-07") | (javabalinusatenggaracounties$date == "2020-03-25") | (javabalinusatenggaracounties$date == "2021-03-14"))
-
-# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2017,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2017-03-28"),NA)
-# 
-# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2018,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2018-03-17"),javabalinusatenggaracounties$days_from)
-# 
-# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2019,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2019-03-07"),javabalinusatenggaracounties$days_from)
-# 
-# javabalinusatenggaracounties$days_from <- ifelse(javabalinusatenggaracounties$year==2020,as.Date(javabalinusatenggaracounties$newdate) - as.Date("2020-03-25"),javabalinusatenggaracounties$days_from)
 
 ```
 
 ```{r include=FALSE}
 # Regression
-
 regList <- vector(mode = "list")
-
-#clist <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list.csv", 
- #   col_names = FALSE)
-  
-clist <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list_new.csv")
-
+clist <-  readLines("county_list_new.csv")
 for (i in clist) {
   javabalinusatenggaracounties$county <- as.numeric((javabalinusatenggaracounties$countyname == i))
  
@@ -283,7 +243,6 @@ stargazer(list(regList), title="Percent Change in Total Radiance for Counties (R
           omit = c("countyno","date","Constant"),
           dep.var.labels = "Logged Total Radiance",
           column.labels = c("Badung","Bangli", "Buleleng", "Denpasar", "Gianyar", "Jembrana", "Karang Asem", "Klungkung", "Tabanan"),
-   #       keep=c("nyepi","county","nyepi*county"),
           covariate.labels = c("Nyepi Day", "Regency", "Nyepi Day in that Regency"),
           keep.stat=c("n","rsq"),
           digits = 3,header=FALSE,
@@ -302,21 +261,17 @@ One of those districts is Melaya in Jembrana regency.
 Melaya is 28% Muslim and only 67% Hindu. Melaya is the westernmost district within the regency of Jembrana, and it includes the port of Gilimanuk, the main connection to the island of Java. It is interesting to note that four of the five districts in Jembrana regency (Melaya, Mendoyo, Negara and Pekutatan) report reductions in radiance less than 60% or statistically indistinguishable from 0%. The percent Hindu for these districts is 67%, 92%, 52%, and 81%, respectively. On average, Bali is 83% Hindu.
 
 ```{r eval=FALSE, include=FALSE}
-religionbycounty <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/religionbycounty.xlsx")
+religionbycounty <- read_excel("religionbycounty.xlsx")
 
-library(readxl)
-javabalinusatenggaracounties <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1counties.xlsx")
+javabalinusatenggaracounties <- read_excel("VNP46A1counties.xlsx") # Needed?
 
 
-javabalinusatenggaracounties$nyepi <- as.numeric((javabalinusatenggaracounties$date == "2017-03-28") | (javabalinusatenggaracounties$date == "2018-03-17") | (javabalinusatenggaracounties$date == "2019-03-07") | (javabalinusatenggaracounties$date == "2020-03-25") | (javabalinusatenggaracounties$date == "2021-03-14"))
+javabalinusatenggaracounties$nyepi <- as.numeric((javabalinusatenggaracounties$date == "2017-03-28") | (javabalinusatenggaracounties$date == "2018-03-17") | (javabalinusatenggaracounties$date == "2019-03-07") | (javabalinusatenggaracounties$date == "2020-03-25") | (javabalinusatenggaracounties$date == "2021-03-14")) # Needed?
 
 library(readr)
 regList7 <- vector(mode = "list")
-
 percentchangeinlight <- vector()
-
-clist3 <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/county_list2.csv")
-
+clist3 <-  readLines("county_list2.csv")
 for (i in clist3) {
   javabalinusatenggaracounties$county <- as.numeric((javabalinusatenggaracounties$countyname == i))
  
@@ -326,24 +281,16 @@ for (i in clist3) {
   
   percentchangeinlight[i] <- regList7[[i]][["coefficients"]][["nyepi:county"]]
 }
-
-# This code makes a dataframe with county names and % reduction in lights
 coeffdf <- data.frame(clist3,percentchangeinlight)
 library(data.table)
 setnames(coeffdf, "clist3", "countyname",skip_absent = TRUE)
-
 combined <- merge(religionbycounty, coeffdf)
-
 combined <- combined[!is.na(combined$percenthindu), ]
-
-#Now save it:
-
 save(combined,file="county_predictions_new.RData")
 ```
 
 
 ```{r include=FALSE}
-# Check the issue with Menddoyo district
 load("county_predictions_new.RData")
 combined$percentchangeinlight_sq <- (combined$percentchangeinlight)^2
 combined$percentchangeinlight_cu <- (combined$percentchangeinlight)^3
@@ -353,21 +300,12 @@ combined$predictedperchindubychangeinlights <- two.lm$fitted
 
 ```{r eval=FALSE, include=FALSE}
 library(plm)
-religionbyzipcode <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/religionbyzipcode_clean.xlsx")
-
-javabalinusatenggarazipcodes <- read_excel("/Volumes/GoogleDrive/My Drive/Nyepi/Processing Scripts/VNP46A1zipcodes.xlsx")
-
-# Indicator variables for Nyepi Day
-
+religionbyzipcode <- read_excel("religionbyzipcode_clean.xlsx")
+javabalinusatenggarazipcodes <- read_excel("VNP46A1zipcodes.xlsx")
 javabalinusatenggarazipcodes$nyepi <- as.numeric((javabalinusatenggarazipcodes$date == "2017-03-28") | (javabalinusatenggarazipcodes$date == "2018-03-17") | (javabalinusatenggarazipcodes$date == "2019-03-07") | (javabalinusatenggarazipcodes$date == "2020-03-25") | (javabalinusatenggarazipcodes$date == "2021-03-14"))
-
 regList8 <- vector(mode = "list")
-
 percentchangeinlight2 <- vector()
-
 zlist <-  religionbyzipcode$zipcodeno
-
-
 for (i in zlist) {
   javabalinusatenggarazipcodes$zipcode <- as.numeric((javabalinusatenggarazipcodes$zipcodeno == i))
  
@@ -381,41 +319,26 @@ for (i in zlist) {
 #This is John's code to save regList8 (you can delete this in the future):
 #save(regList8, file = "regList8new.Rdata")
 save(percentchangeinlight2, file = "percentchangeinlight2newALLDAYS.Rdata")
-
 # This code makes a dataframe with zipcode names and % reduction in lights
 coeffdf2 <- data.frame(zlist,percentchangeinlight2)
 library(data.table)
 setnames(coeffdf2, "zlist", "zipcodeno",skip_absent = TRUE)
-
 combined2 <- merge(religionbyzipcode, coeffdf2)
 combined2 <- combined2[!is.na(combined2$hindu), ]
-View(combined2)
 # Now save it:
 save(combined2,file="zipcode_predictions_newALLDAYS.RData")
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-#zlist <-  readLines("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/zipcode_list.csv")
 load("zipcode_predictions_newALLDAYS.RData")
-# This code makes a dataframe with county names and % reduction in lights
-#coeffdf2 <- data.frame(zlist,percentchangeinlight2)
-#library(data.table)
-#setnames(coeffdf2, "zlist", "zipcodename")
-
-#combined2 <- merge(religionbyzipcode, coeffdf2)
-#combined2 <- combined2[!is.na(combined2$hindu), ]
 ```
 
 ```{r include=FALSE}
 setnames(combined2, "percentchangeinlight2", "percentchangeinlight")
-
 combined2$percentchangeinlight_sq <- (combined2$percentchangeinlight)^2
 combined2$percentchangeinlight_cu <- (combined2$percentchangeinlight)^3
 three.lm <- lm(hindu ~ percentchangeinlight + percentchangeinlight_sq + percentchangeinlight_cu, combined2)
-#summary(three.lm)
-
 combined2$predictedperchindubychangeinlights2 <- three.lm$fitted
-#pred_r_squared(three.lm)
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
@@ -431,7 +354,6 @@ stargazer(two.lm, three.lm, title="Percent Hindu Predicted by Percent Change in 
 With these observations in mind, we now turn to the religion prediction results. The results of estimating Equation \ref{eq:predict} using the regency level data are presented in Column (1) of Table \ref{tab:predict}. The R^2^ is 0.777, which implies that 78% of the variation in Percent Hindu in the region can be explained by nighttime imagery (specifically the percentage reduction in total radiance on Nyepi night). Column (2) presents the district (or zipcode) level results. The R^2^ drops to 62% but is still impressive considering the only model input is satellite imagery. In Figure \ref{fig:real_pred}, we plot Percent Hindu from census data along with the predicted Percent Hindu obtained from the nighttime radiance regression model, for both counties and zipcodes.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-
 plot1<-ggplot(data=combined, aes(x= reorder(countyname, -percenthindu)))+
     geom_point(aes(y=predictedperchindubychangeinlights),shape=21,fill="pink")+
     geom_point(aes(y=percenthindu),shape=21,fill="red")+
@@ -441,9 +363,7 @@ plot1<-ggplot(data=combined, aes(x= reorder(countyname, -percenthindu)))+
         title =element_text(size=12, face='bold'))+
   scale_color_discrete(name = "Variables", labels = c("Percent Change in Lights", "Predicted Percent Hindu Based on Lights"))+
   labs(x="Counties by Percent Hindu (Ordered from Greatest to Least)", y="Percent Hindu")
-
 plot2<-ggplot(data=combined2, aes(x= reorder(zipcodeno, -hindu)))+
-  
     geom_point(aes(y=predictedperchindubychangeinlights2),shape=21,fill="pink")+
   geom_point(aes(y=hindu),shape=21,fill="red")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 2))+
@@ -464,40 +384,28 @@ library(sf)
 library(ggplot2)
 library(dplyr)
 
-indonesiazipcodes <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm3",layer="gadm36_IDN_3") # Is this important?
-
+indonesiazipcodes <- read_sf(dsn="IDN_adm3",layer="gadm36_IDN_3") 
 countysf1 <- select(combined2,provincename,countyname,zipcodename,hindu, percentchangeinlight)
-
 indonesiazipcodes$combinedcounties1 <- as.numeric(indonesiazipcodes$NAME_2 == "Pasuruan" | indonesiazipcodes$NAME_2 == "Kota Pasuruan" | indonesiazipcodes$NAME_2 == "Mataram" | indonesiazipcodes$NAME_2 == "Probolinggo" | indonesiazipcodes$NAME_2 == "Kota Probolinggo" | indonesiazipcodes$NAME_2 == "Kota Malang" | indonesiazipcodes$NAME_2 == "Malang" | indonesiazipcodes$NAME_2 == "Lumajang")
-
 combinedcounties2 <- filter(indonesiazipcodes, combinedcounties1 == "1")
-
 combinedcounties2 <- select(combinedcounties2, NAME_1, NAME_2, NAME_3, geometry,combinedcounties1)
-
 combinedcounties2_copy <- combinedcounties2
-
 names(combinedcounties2_copy) <- c("provincename", "countyname",  "zipcodename", "geometry", "combinedcounties1")
 
 combinedcounties2_merged <- merge(cbind(combinedcounties2_copy, X=rownames(combinedcounties2_copy)), cbind(countysf1, variable=rownames(countysf1)))
 
-coordinates <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/coordinates.csv")
-
+coordinates <- read_csv("coordinates.csv")
 final.merge <- merge(combinedcounties2_merged,coordinates)
-
 pasuruan <- filter(final.merge, countyname == "Kota Pasuruan" | countyname == "Pasuruan")
-
 mataram <- filter(final.merge, countyname == "Mataram")
-
 probolinggo <- filter(final.merge, countyname == "Kota Probolinggo" | countyname == "Probolinggo")
-
 lumajang <- filter(final.merge, countyname == "Lumajang")
-
 malang <- filter(final.merge, countyname == "Kota Malang" | countyname == "Malang")
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 library(gridExtra)
-indonesiacounties <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm2",layer="gadm36_IDN_2")
+indonesiacounties <- read_sf(dsn="IDN_adm2",layer="gadm36_IDN_2")
 
 fourcounties <- filter(indonesiacounties, NAME_2 == "Lumajang" | NAME_2 == "Malang" | NAME_2 == "Probolinggo" | NAME_2 == "Pasuruan")
 
@@ -517,7 +425,6 @@ perclightchange4 <- filter(pasuruan, perclightchange == "1")
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 plotA<-ggplot()+
   geom_sf(data = indonesiacounties, fill = "#737373", color="#d9d9d9")+
-  #geom_sf(data=final.merge)+
   geom_sf(data = lumajang, aes(fill=hindu), color = "#bdbdbd")+
   geom_sf(data = malang, aes(fill=hindu),color = "#bdbdbd")+
   geom_sf(data = probolinggo, aes(fill=hindu),color = "#bdbdbd")+
@@ -553,13 +460,9 @@ plotB<-ggplot()+
   xlab("Longitude") + ylab("Latitude")+
   guides(fill=guide_colorbar(title="Percent Reduction 
 in Radiance",barwidth = 8,frame.colour = "black"))+
-  # scale_fill_gradient2(high = "#d95f0e", low = "#ffffe5", midpoint=0.1,
-  #                     guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
-    # scale_fill_gradientn(colours = c("#ffffe5","#FFF6D9","#FAC192","#F4A770","#d95f0e"),
-    #                      values = c(0,0.1713595,0.4840651,0.7038904,1),
-                             scale_fill_gradientn(colours = #c("#ffffe5","#ffffe5","#FAC192","#F4A770","#d95f0e"),
+                             scale_fill_gradientn(colours = 
                                                     c("#ffffe5","#ffffe5","#ffffe5","#d95f0e","#d95f0e"),
-                        # values = c(0,0.45,0.4840651,0.7038904,1),
+                        
                         values = c(0,0.2,0.25,0.5,1),
                       guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
   theme(panel.grid.major = element_line(
@@ -580,7 +483,7 @@ library(sf)
 library(ggplot2)
 library(dplyr)
 
-indonesiazipcodes <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm3",layer="gadm36_IDN_3") # Is this important?
+indonesiazipcodes <- read_sf(dsn="IDN_adm3",layer="gadm36_IDN_3") # Needed?
 
 countysf1 <- select(combined2,provincename,countyname,zipcodename,hindu, percentchangeinlight)
 
@@ -595,8 +498,6 @@ combinedcounties2_copy <- combinedcounties2
 names(combinedcounties2_copy) <- c("provincename", "countyname",  "zipcodename", "geometry", "combinedcounties1")
 
 combinedcounties2_merged <- merge(cbind(combinedcounties2_copy, X=rownames(combinedcounties2_copy)), cbind(countysf1, variable=rownames(countysf1)))
-
-#coordinates <- read_csv("/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/coordinates.csv")
 
 final.merge <- combinedcounties2_merged
 
@@ -614,7 +515,7 @@ mataram <- filter(final.merge, countyname == "Mataram")
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 library(gridExtra)
-indonesiacounties <- read_sf(dsn="/Volumes/GoogleDrive/My Drive/Nyepi/Alemarie/IDN_adm2",layer="gadm36_IDN_2")
+indonesiacounties <- read_sf(dsn="IDN_adm2",layer="gadm36_IDN_2")
 
 lombokcounties <- filter(indonesiacounties, NAME_2 == "Lombok Tengah" | NAME_2 == "Lombok Timur" | NAME_2 == "Lombok Utara" | NAME_2 == "Lombok Barat" | NAME_2 == "Mataram" )
 
@@ -637,7 +538,6 @@ perclightchange5 <- filter(mataram, perclightchange == "1")
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 plotA<-ggplot()+
   geom_sf(data = indonesiacounties, fill = "#737373", color="#d9d9d9")+
-  #geom_sf(data=final.merge)+
   geom_sf(data = lomboktengah, aes(fill=hindu), color = "#bdbdbd")+
   geom_sf(data = lomboktimur, aes(fill=hindu),color = "#bdbdbd")+
   geom_sf(data = lombokutara, aes(fill=hindu),color = "#bdbdbd")+
@@ -677,14 +577,10 @@ plotB<-ggplot()+
   xlab("Longitude") + ylab("Latitude")+
   guides(fill=guide_colorbar(title="Percent Reduction 
 in Radiance",barwidth = 8,frame.colour = "black"))+
-  # scale_fill_gradient2(high = "#d95f0e", low = "#ffffe5", midpoint=0.1,
-  #                      guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
-    # scale_fill_gradientn(colours = c("#ffffe5","#FFF6D9","#FAC192","#F4A770","#d95f0e"),
-    #                      values = c(0,0.1713595,0.4840651,0.7038904,1),
                             scale_fill_gradientn(colours = c("#ffffe5","#ffffe5","#ffffe5","#F4A770","#d95f0e"),
-                                             #       c("#ffffe5","#ffffe5","#ffffe5","#F4A770","#d95f0e"),
+                                             
                         values = c(0,0.4,0.7,0.8,1),
-                      #  values = c(0,0.6,0.69,0.7,1), 
+ 
                       guide = "colorbar",labels =scales::percent_format(accuracy = 5L))+
   theme(panel.grid.major = element_line(
     color = gray(.5), linetype = "dashed", size = 0.5), 
